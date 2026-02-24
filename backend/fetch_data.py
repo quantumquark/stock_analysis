@@ -149,14 +149,19 @@ def download_and_store_prices(session, tickers):
             rows.extend(_extract_ticker_rows(raw, ticker))
 
         if rows:
-            try:
-                stmt = sqlite_insert(DailyPrice).values(rows).on_conflict_do_nothing(
-                    index_elements=["ticker", "date"]
-                )
-                with engine.begin() as conn:
-                    conn.execute(stmt)
-            except Exception as db_err:
-                print(f"  [WARN] DB insert error in batch {batch_num}: {db_err}")
+            # SQLite has a 999-variable limit; with 7 columns per row
+            # that allows max ~142 rows per INSERT. Use 100 to be safe.
+            INSERT_CHUNK = 100
+            for chunk_start in range(0, len(rows), INSERT_CHUNK):
+                chunk = rows[chunk_start: chunk_start + INSERT_CHUNK]
+                try:
+                    stmt = sqlite_insert(DailyPrice).values(chunk).on_conflict_do_nothing(
+                        index_elements=["ticker", "date"]
+                    )
+                    with engine.begin() as conn:
+                        conn.execute(stmt)
+                except Exception as db_err:
+                    print(f"  [WARN] DB insert error in batch {batch_num}: {db_err}")
 
         # Polite delay to avoid rate limiting
         time.sleep(0.5)
