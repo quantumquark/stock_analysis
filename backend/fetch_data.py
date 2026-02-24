@@ -14,7 +14,9 @@ This takes ~5-15 minutes depending on network speed.
 It is safe to re-run -- existing records are skipped.
 """
 
+import io
 import time
+import requests
 import pandas as pd
 import yfinance as yf
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
@@ -30,7 +32,17 @@ from models import Stock, DailyPrice, get_engine, get_session, init_db
 def get_sp500_list():
     print("Fetching S&P 500 list from Wikipedia...")
     url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
-    tables = pd.read_html(url)
+    # Use requests with a browser User-Agent — Wikipedia blocks Python's urllib
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/124.0.0.0 Safari/537.36"
+        )
+    }
+    resp = requests.get(url, headers=headers, timeout=15)
+    resp.raise_for_status()
+    tables = pd.read_html(io.StringIO(resp.text))
     df = tables[0]
     df = df.rename(columns={
         "Symbol": "ticker",
