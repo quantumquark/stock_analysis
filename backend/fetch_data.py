@@ -71,6 +71,46 @@ def upsert_stocks(session, stocks):
 BATCH_SIZE = 50  # Download N tickers at a time to avoid rate limits
 
 
+def _extract_ticker_rows(raw, ticker):
+    """
+    Extract OHLCV rows for a single ticker from a yfinance DataFrame.
+    Handles yfinance >= 1.0 MultiIndex columns: (Price, Ticker).
+    """
+    rows = []
+    try:
+        # yfinance 1.x always returns MultiIndex (Price, Ticker)
+        tickers_in_cols = raw.columns.get_level_values(1).unique().tolist()
+        if ticker not in tickers_in_cols:
+            return rows
+        df = raw.xs(ticker, axis=1, level=1).copy()
+    except (KeyError, AttributeError):
+        return rows
+
+    if df.empty:
+        return rows
+
+    df = df.reset_index()
+    date_col = "Date" if "Date" in df.columns else df.columns[0]
+
+    for _, row in df.iterrows():
+        close_val = row.get("Close")
+        if close_val is None or pd.isna(close_val):
+            continue
+        date_val = row[date_col]
+        if hasattr(date_val, "date"):
+            date_val = date_val.date()
+        rows.append({
+            "ticker": ticker,
+            "date": date_val,
+            "open": float(row["Open"]) if not pd.isna(row.get("Open")) else None,
+            "high": float(row["High"]) if not pd.isna(row.get("High")) else None,
+            "low": float(row["Low"]) if not pd.isna(row.get("Low")) else None,
+            "close": float(close_val),
+            "volume": int(row["Volume"]) if not pd.isna(row.get("Volume")) else None,
+        })
+    return rows
+
+
 def download_and_store_prices(session, tickers):
     engine = get_engine()
     total = len(tickers)
@@ -84,10 +124,8 @@ def download_and_store_prices(session, tickers):
                 tickers=batch,
                 period="5y",
                 interval="1d",
-                group_by="ticker",
                 auto_adjust=True,
                 progress=False,
-                threads=True,
             )
         except Exception as e:
             print(f"  [WARN] Batch {batch_num} download error: {e}")
@@ -95,50 +133,8 @@ def download_and_store_prices(session, tickers):
             continue
 
         rows = []
-
-        if len(batch) == 1:
-            # Single ticker — yfinance returns flat columns
-            ticker = batch[0]
-            df = raw.copy()
-            if df.empty:
-                continue
-            df = df.reset_index()
-            for _, row in df.iterrows():
-                if pd.isna(row.get("Close")):
-                    continue
-                rows.append({
-                    "ticker": ticker,
-                    "date": row["Date"].date() if hasattr(row["Date"], "date") else row["Date"],
-                    "open": float(row["Open"]) if not pd.isna(row.get("Open")) else None,
-                    "high": float(row["High"]) if not pd.isna(row.get("High")) else None,
-                    "low": float(row["Low"]) if not pd.isna(row.get("Low")) else None,
-                    "close": float(row["Close"]),
-                    "volume": int(row["Volume"]) if not pd.isna(row.get("Volume")) else None,
-                })
-        else:
-            for ticker in batch:
-                try:
-                    if ticker not in raw.columns.get_level_values(0):
-                        continue
-                    df = raw[ticker].copy()
-                    if df.empty:
-                        continue
-                    df = df.reset_index()
-                    for _, row in df.iterrows():
-                        if pd.isna(row.get("Close")):
-                            continue
-                        rows.append({
-                            "ticker": ticker,
-                            "date": row["Date"].date() if hasattr(row["Date"], "date") else row["Date"],
-                            "open": float(row["Open"]) if not pd.isna(row.get("Open")) else None,
-                            "high": float(row["High"]) if not pd.isna(row.get("High")) else None,
-                            "low": float(row["Low"]) if not pd.isna(row.get("Low")) else None,
-                            "close": float(row["Close"]),
-                            "volume": int(row["Volume"]) if not pd.isna(row.get("Volume")) else None,
-                        })
-                except Exception as ex:
-                    print(f"  [WARN] Error processing {ticker}: {ex}")
-                    continue
+        for ticker in batch:
+            rows.extend(_extract_ticker_rows(raw, ticker))
 
         if rows:
             try:
