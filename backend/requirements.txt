@@ -1,0 +1,9 @@
+flask==3.0.3
+flask-cors==4.0.1
+sqlalchemy==2.0.30
+yfinance==0.2.40
+pandas==2.2.2
+tqdm==4.66.4
+requests==2.32.3
+lxml==5.2.2
+beautifulsoup4==4.12.3

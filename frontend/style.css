@@ -1,0 +1,159 @@
+/* ── Global ─────────────────────────────────────────────────── */
+:root {
+  --primary: #22c55e;
+  --primary-dark: #16a34a;
+  --bg: #f8fafc;
+  --card-bg: #ffffff;
+  --text: #1e293b;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --banner-from: #0f172a;
+  --banner-to: #1e3a5f;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+/* ── Navbar ─────────────────────────────────────────────────── */
+.navbar {
+  border-bottom: 1px solid #1f2937;
+}
+
+/* ── Search hint chips ──────────────────────────────────────── */
+.search-hint-chip {
+  display: inline-block;
+  background: #e2e8f0;
+  color: #475569;
+  border-radius: 4px;
+  padding: 1px 7px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin: 0 2px;
+}
+.search-hint-chip:hover {
+  background: #cbd5e1;
+}
+
+/* ── Choices.js overrides ───────────────────────────────────── */
+.choices {
+  width: 100%;
+  margin-bottom: 0;
+}
+.choices__inner {
+  border: 1px solid #dee2e6;
+  border-left: none;
+  border-radius: 0 0.5rem 0.5rem 0 !important;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+}
+.choices__list--dropdown {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  z-index: 9999;
+}
+.choices__list--dropdown .choices__item--selectable {
+  padding: 10px 15px;
+  font-size: 0.93rem;
+}
+.choices__list--dropdown .choices__item--selectable.is-highlighted {
+  background: #f0fdf4;
+  color: var(--primary-dark);
+}
+.choices__input {
+  font-size: 0.95rem;
+}
+
+/* ── Stock banner ───────────────────────────────────────────── */
+.stock-banner {
+  background: linear-gradient(135deg, var(--banner-from) 0%, var(--banner-to) 100%);
+  border: 1px solid #1e3a5f;
+}
+
+.ticker-badge {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.05rem;
+  padding: 4px 12px;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+}
+
+/* ── Period buttons ─────────────────────────────────────────── */
+.btn-period {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-weight: 500;
+  padding: 4px 14px;
+  transition: all 0.15s;
+}
+.btn-period:hover {
+  background: #f0fdf4;
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+.btn-period.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* ── Chart container ────────────────────────────────────────── */
+#chart-container {
+  position: relative;
+  min-height: 340px;
+}
+
+canvas#priceChart {
+  max-height: 420px;
+}
+
+/* ── Stat cards ─────────────────────────────────────────────── */
+.stat-card {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+}
+.stat-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  font-weight: 600;
+}
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-top: 4px;
+}
+
+/* ── Card ───────────────────────────────────────────────────── */
+.card {
+  border: 1px solid var(--border) !important;
+}
+.card-header {
+  border-radius: 0.75rem 0.75rem 0 0 !important;
+}
+
+/* ── Spinner ────────────────────────────────────────────────── */
+.spinner-border {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 576px) {
+  .stat-value {
+    font-size: 1rem;
+  }
+}
